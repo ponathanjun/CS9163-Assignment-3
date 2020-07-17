@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename = 'style.css') }}">
+        <title>{% block title %}{% endblock %}</title>
+        <div class="topnav">
+            {% for link, name in [("/", "Home"), ("/register", "Register"), ("/login", "Login")] %}
+                <a {% if link==request.path %} class="active" {% endif %} href="{{ link }}">{{ name }}</a>
+            {% endfor %}
+            {% if session['username'] %}
+            {% for link, name in [("/spell_check", "Spell Check"), ("/logout", "Logout")] %}
+            <a {% if link==request.path %} class="active" {% endif %} href="{{ link }}">{{ name }}</a>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </head>
+    <body>
+        <h1>{% block header %}{% endblock %}</h1>
+        {% block body %}{% endblock %}
+    </body>
+</html>
+
