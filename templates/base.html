@@ -8,9 +8,13 @@
                 <a {% if link==request.path %} class="active" {% endif %} href="{{ link }}">{{ name }}</a>
             {% endfor %}
             {% if session['username'] %}
-            {% for link, name in [("/spell_check", "Spell Check"), ("/logout", "Logout")] %}
+            {% for link, name in [("/spell_check", "Spell Check"), ("/history", "History")] %}
             <a {% if link==request.path %} class="active" {% endif %} href="{{ link }}">{{ name }}</a>
             {% endfor %}
+            {% if session['username'] == 'admin' %}
+            <a {% if "/login_history"==request.path %} class="active" {% endif %} href="/login_history">Logs</a>
+            {% endif %}
+            <a {% if "/logout"==request.path %} class="active" {% endif %} href="/logout">Logout</a>
             {% endif %}
         </div>
     </head>

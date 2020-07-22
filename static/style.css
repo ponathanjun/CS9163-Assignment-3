@@ -29,3 +29,7 @@ body {
     background-color: #FFDC00;
     color: white;
 }
+
+ul {
+    list-style-position: inside;
+}

@@ -10,6 +10,12 @@
 <br><br>
 <a style = "color: white" href = "/spell_check">SPELL CHECK</a>
 <br><br>
+<a style = "color: white" href = "/history">HISTORY</a>
+<br><br>
+{% if session['username'] == 'admin' %}
+<a style = "color: white" href = "/login_history">LOGS</a>
+<br><br>
+{% endif %}
 <a style = "color: white" href = "/logout">LOGOUT</a>
 {% endif %}
 {% endblock %}
