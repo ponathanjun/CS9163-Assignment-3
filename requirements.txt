@@ -5,4 +5,5 @@ Flask-WTF
 bcrypt
 tox
 tox-travis
+flask-sqlalchemy
 
