@@ -38,22 +38,21 @@ def test_register(app):
     # Check if loaded successfully
     assert result.status_code == 200
     assert b'User Registration' in result.data
-
+    
     # Check if correct information registration is working
     result = app.post('/register', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
     # Check if loaded successfully
     assert result.status_code == 200
     # Check if registration was successful
-    print(result.data)
     assert b'<div id="success" style = "color: black">Registration Success!</div>' in result.data
-
+    
     # Check if repeated username registration error is working
     result = app.post('/register', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
     # Check if loaded successfully
     assert result.status_code == 200
     # Check if registration was unsuccessful
     assert b'<div id="success" style = "color: black">Registration Failure!</div>' in result.data
-
+    
     # Check if loading properly after login
     app.post('/login', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
     result = app.get("/register", follow_redirects=True)
