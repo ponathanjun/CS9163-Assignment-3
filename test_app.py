@@ -1,8 +1,10 @@
 import pytest
 from app import create_app
+import os
 
 @pytest.fixture
 def app():
+    os.remove("spellchecker.db")
     app = create_app()
     # Turn off CSRF to prevent token issues (security tests not needed according to assignment)
     app.config['WTF_CSRF_ENABLED'] = False
@@ -31,7 +33,35 @@ def test_home(app):
     assert b'<a style = "color: white" href = "/spell_check">SPELL CHECK</a>' in result.data
     assert b'<a style = "color: white" href = "/logout">LOGOUT</a>' in result.data
 
+# Check if register page is working properly
+def test_register(app):
+    # Loading properly before login
+    result = app.get("/register", follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    assert b'User Registration' in result.data
 
+    # Check if correct information registration is working
+    result = app.post('/register', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    # Check if registration was successful
+    assert b'<div id="success" style = "color: black">Registration Success!</div>' in result.data
+
+    # Check if repeated username registration error is working
+    result = app.post('/register', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    # Check if registration was unsuccessful
+    assert b'<div id="success" style = "color: black">Registration Failure!</div>' in result.data
+
+    # Check if loading properly after login
+    app.post('/login', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    result = app.get("/register", follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    # Check if login is recognized
+    assert b'<div id="success" style = "color: black">Already logged in!</div>' in result.data
 
 # Check if login page is working properly
 def test_login(app):
