@@ -44,6 +44,7 @@ def test_register(app):
     # Check if loaded successfully
     assert result.status_code == 200
     # Check if registration was successful
+    print(result.data)
     assert b'<div id="success" style = "color: black">Registration Success!</div>' in result.data
 
     # Check if repeated username registration error is working
