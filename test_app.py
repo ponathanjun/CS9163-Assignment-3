@@ -4,7 +4,8 @@ import os
 
 @pytest.fixture
 def app():
-    os.remove("spellchecker.db")
+    if os.path.exists("spellchecker.db"):
+        os.remove("spellchecker.db")
     app = create_app()
     # Turn off CSRF to prevent token issues (security tests not needed according to assignment)
     app.config['WTF_CSRF_ENABLED'] = False
