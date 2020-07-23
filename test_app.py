@@ -211,16 +211,22 @@ def test_query(app):
 
     # Check that you can access your own queries, but not anyone elses
     result = app.get('/history/query2', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
     assert b'<div id="queryid">Query ID: 2</div>' in result.data
     assert b'<div id="username">User Who Submitted: jonathan</div>' in result.data
     assert b'<div id="querytext">Text Submitted: my dawg is kewl.</div>' in result.data
     assert b'<div id="queryresults">Misspelled Words: dawg, kewl</div>' in result.data
     result = app.get('/history/query3', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
     assert b'<div id="queryid">Query ID: 3</div>' in result.data
     assert b'<div id="username">User Who Submitted: jonathan</div>' in result.data
     assert b'<div id="querytext">Text Submitted: second query</div>' in result.data
     assert b'<div id="queryresults">Misspelled Words: </div>' in result.data
     result = app.get('/history/query1', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
     assert b'Showing results for: jonathan' in result.data
     assert b'<div id="queryid">Query ID: 1</div>' not in result.data
     assert b'<div id="username">User Who Submitted: brian</div>' not in result.data
@@ -231,25 +237,84 @@ def test_query(app):
     app.get('/logout', follow_redirects=True)
     app.post('/login', data = {'uname':"admin", 'pword':"Administrator@1", '2fa':"12345678901"}, follow_redirects=True)
     result = app.get('/history', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
     assert b'<form name="userquery" id="userquery" action="/history" method="POST">' in result.data
     assert b'Showing results for: admin' in result.data
     result = app.get('/history/query2', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
     assert b'<div id="queryid">Query ID: 2</div>' in result.data
     assert b'<div id="username">User Who Submitted: jonathan</div>' in result.data
     assert b'<div id="querytext">Text Submitted: my dawg is kewl.</div>' in result.data
     assert b'<div id="queryresults">Misspelled Words: dawg, kewl</div>' in result.data
     result = app.get('/history/query3', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
     assert b'<div id="queryid">Query ID: 3</div>' in result.data
     assert b'<div id="username">User Who Submitted: jonathan</div>' in result.data
     assert b'<div id="querytext">Text Submitted: second query</div>' in result.data
     assert b'<div id="queryresults">Misspelled Words: </div>' in result.data
     result = app.get('/history/query1', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
     assert b'Showing results for: jonathan' not in result.data
     assert b'<div id="queryid">Query ID: 1</div>' in result.data
     assert b'<div id="username">User Who Submitted: brian</div>' in result.data
     assert b'<div id="querytext">Text Submitted: test quiery</div>' in result.data
     assert b'<div id="queryresults">Misspelled Words: quiery</div>' in result.data
 
+# Check that log page is working properly
+def test_login_history(app):
+    # Check that you can't access page before logging in (should redirect to home page)
+    result = app.get('/history/login_history', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    assert b'Home Page' in result.data
+
+    # Check that you can't access page if you're not logged into admin (should redirect to home page)
+    # Register and log in
+    app.post('/register', data = {'uname':"brian", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)    
+    app.post('/login', data = {'uname':"brian", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    result = app.get('/history/login_history', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    assert b'Home Page' in result.data
+    app.get('/logout', follow_redirects=True)
+
+    # Register another user and log in and out
+    app.post('/register', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    app.post('/login', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    app.get('/logout', follow_redirects=True)
+    
+    # Check that page works when logged into admin
+    # Log into admin
+    app.post('/login', data = {'uname':"admin", 'pword':"Administrator@1", '2fa':"12345678901"}, follow_redirects=True)
+    result = app.get('/history/login_history', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    assert b'Home Page' not in result.data
+    assert b'<form name="userid" id="userid" action="/login_history" method="POST">' in result.data
+    assert b'Showing results for: admin' not in result.data
+    assert b'<ul class="list">' not in result.data
+    # Check if you can see logs of another user
+    result = app.post('/history/login_history', data = {'uname':"brian"}, follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    assert b'<form name="userid" id="userid" action="/login_history" method="POST">' in result.data
+    assert b'Showing results for: brian' in result.data
+    assert b'<div id="login1_time">Login Time:' in result.data
+    assert b'<div id="logout1_time">Logout Time:' in result.data
+    # Check that a user's log are in the right place
+    assert b'<div id="login2_time">Login Time:' not in result.data
+    # Check that logout time N/A. is working
+    result = app.post('/history/login_history', data = {'uname':"admin"}, follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    assert b'<form name="userid" id="userid" action="/login_history" method="POST">' in result.data
+    assert b'Showing results for: admin' in result.data
+    assert b'<div id="login3_time">Login Time:' in result.data
+    assert b'<div id="logout3_time">Logout Time: N/A.</div>' in result.data
     
 # Check that logout is working properly
 def test_logout(app):
