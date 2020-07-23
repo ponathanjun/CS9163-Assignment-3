@@ -267,7 +267,7 @@ def test_query(app):
 # Check that log page is working properly
 def test_login_history(app):
     # Check that you can't access page before logging in (should redirect to home page)
-    result = app.get('/history/login_history', follow_redirects=True)
+    result = app.get('/login_history', follow_redirects=True)
     # Check if loaded successfully
     assert result.status_code == 200
     assert b'Home Page' in result.data
@@ -276,7 +276,7 @@ def test_login_history(app):
     # Register and log in
     app.post('/register', data = {'uname':"brian", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)    
     app.post('/login', data = {'uname':"brian", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
-    result = app.get('/history/login_history', follow_redirects=True)
+    result = app.get('/login_history', follow_redirects=True)
     # Check if loaded successfully
     assert result.status_code == 200
     assert b'Home Page' in result.data
@@ -287,10 +287,16 @@ def test_login_history(app):
     app.post('/login', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
     app.get('/logout', follow_redirects=True)
     
-    # Check that page works when logged into admin
     # Log into admin
     app.post('/login', data = {'uname':"admin", 'pword':"Administrator@1", '2fa':"12345678901"}, follow_redirects=True)
-    result = app.get('/history/login_history', follow_redirects=True)
+    # Check that log link are in nav bar and home page
+    result = app.get('/', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    assert b'<a  href="/login_history">Logs</a>' in result.data
+    assert b'<a style = "color: white" href = "/login_history">LOGS</a>' in result.data
+    # Check that page works when logged into admin
+    result = app.get('/login_history', follow_redirects=True)
     # Check if loaded successfully
     assert result.status_code == 200
     assert b'Home Page' not in result.data
@@ -298,7 +304,7 @@ def test_login_history(app):
     assert b'Showing results for: admin' not in result.data
     assert b'<ul class="list">' not in result.data
     # Check if you can see logs of another user
-    result = app.post('/history/login_history', data = {'uname':"brian"}, follow_redirects=True)
+    result = app.post('/login_history', data = {'uname':"brian"}, follow_redirects=True)
     # Check if loaded successfully
     assert result.status_code == 200
     assert b'<form name="userid" id="userid" action="/login_history" method="POST">' in result.data
@@ -308,7 +314,7 @@ def test_login_history(app):
     # Check that a user's log are in the right place
     assert b'<div id="login2_time">Login Time:' not in result.data
     # Check that logout time N/A. is working
-    result = app.post('/history/login_history', data = {'uname':"admin"}, follow_redirects=True)
+    result = app.post('/login_history', data = {'uname':"admin"}, follow_redirects=True)
     # Check if loaded successfully
     assert result.status_code == 200
     assert b'<form name="userid" id="userid" action="/login_history" method="POST">' in result.data
