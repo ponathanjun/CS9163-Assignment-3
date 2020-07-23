@@ -190,6 +190,66 @@ def test_history(app):
     assert b'<div id="numqueries">Total number of queries: 2</div>' in result.data
     assert b'<a style="color: white" href="history/query2" id="query2">2</a>' in result.data
     assert b'<a style="color: white" href="history/query3" id="query3">3</a>' in result.data
+
+# Check that query page is working properly
+def test_query(app):
+    # Check that you can't access page before logging in (should redirect to home page)
+    result = app.get('/history/query1', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    assert b'Home Page' in result.data
+
+    # Register, login, and input test query
+    app.post('/register', data = {'uname':"brian", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    app.post('/login', data = {'uname':"brian", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    app.post('/spell_check', data = {'inputtext':"test quiery"}, follow_redirects=True)
+    app.get('/logout', follow_redirects=True)
+    app.post('/register', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    app.post('/login', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    app.post('/spell_check', data = {'inputtext':"my dawg is kewl."}, follow_redirects=True)
+    app.post('/spell_check', data = {'inputtext':"second query"}, follow_redirects=True)
+
+    # Check that you can access your own queries, but not anyone elses
+    result = app.get('/history/query2', follow_redirects=True)
+    assert b'<div id="queryid">Query ID: 2</div>' in result.data
+    assert b'<div id="username">User Who Submitted: jonathan</div>' in result.data
+    assert b'<div id="querytext">Text Submitted: my dawg is kewl.</div>' in result.data
+    assert b'<div id="queryresults">Misspelled Words: dawg, kewl</div>' in result.data
+    result = app.get('/history/query3', follow_redirects=True)
+    assert b'<div id="queryid">Query ID: 3</div>' in result.data
+    assert b'<div id="username">User Who Submitted: jonathan</div>' in result.data
+    assert b'<div id="querytext">Text Submitted: second query</div>' in result.data
+    assert b'<div id="queryresults">Misspelled Words: </div>' in result.data
+    result = app.get('/history/query1', follow_redirects=True)
+    assert b'Showing results for: jonathan' in result.data
+    assert b'<div id="queryid">Query ID: 1</div>' not in result.data
+    assert b'<div id="username">User Who Submitted: brian</div>' not in result.data
+    assert b'<div id="querytext">Text Submitted: test quiery</div>' not in result.data
+    assert b'<div id="queryresults">Misspelled Words: quiery</div>' not in result.data
+
+    # Check that admin can access all queries
+    app.get('/logout', follow_redirects=True)
+    app.post('/login', data = {'uname':"admin", 'pword':"Administrator@1", '2fa':"12345678901"}, follow_redirects=True)
+    result = app.get('/history', follow_redirects=True)
+    assert b'<form name="userquery" id="userquery" action="/history" method="POST">' in result.data
+    assert b'Showing results for: admin' in result.data
+    result = app.get('/history/query2', follow_redirects=True)
+    assert b'<div id="queryid">Query ID: 2</div>' in result.data
+    assert b'<div id="username">User Who Submitted: jonathan</div>' in result.data
+    assert b'<div id="querytext">Text Submitted: my dawg is kewl.</div>' in result.data
+    assert b'<div id="queryresults">Misspelled Words: dawg, kewl</div>' in result.data
+    result = app.get('/history/query3', follow_redirects=True)
+    assert b'<div id="queryid">Query ID: 3</div>' in result.data
+    assert b'<div id="username">User Who Submitted: jonathan</div>' in result.data
+    assert b'<div id="querytext">Text Submitted: second query</div>' in result.data
+    assert b'<div id="queryresults">Misspelled Words: </div>' in result.data
+    result = app.get('/history/query1', follow_redirects=True)
+    assert b'Showing results for: jonathan' not in result.data
+    assert b'<div id="queryid">Query ID: 1</div>' in result.data
+    assert b'<div id="username">User Who Submitted: brian</div>' in result.data
+    assert b'<div id="querytext">Text Submitted: test quiery</div>' in result.data
+    assert b'<div id="queryresults">Misspelled Words: quiery</div>' in result.data
+
     
 # Check that logout is working properly
 def test_logout(app):
