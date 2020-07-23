@@ -22,17 +22,28 @@ def test_home(app):
     assert b'<a style = "color: white" href = "/register">REGISTER</a>' in result.data
     assert b'<a style = "color: white" href = "/login">LOGIN</a>' in result.data
     
-    
     # After login
-    # Register and login
+    # Register and login (normal user)
     app.post('/register', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
     app.post('/login', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
     result = app.get("/", follow_redirects=True)
     # Check if loaded successfully
     assert result.status_code == 200
-    # Check if spell check and logout link are now present
+    # Check if spell check, history, and logout link are now present
     assert b'<a style = "color: white" href = "/spell_check">SPELL CHECK</a>' in result.data
+    assert b'<a style = "color: white" href = "/history">HISTORY</a>' in result.data
     assert b'<a style = "color: white" href = "/logout">LOGOUT</a>' in result.data
+    assert b'<a style = "color: white" href = "/login_history">LOGS</a>' not in result.data
+    # Logout
+    app.get('/logout', follow_redirects=True)
+
+    # Login (admin)
+    app.post('/login', data = {'uname':"admin", 'pword':"Administrator@1", '2fa':"12345678901"}, follow_redirects=True)
+    result = app.get("/", follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    # Check if log link is now present
+    assert b'<a style = "color: white" href = "/login_history">LOGS</a>' in result.data
 
 # Check if register page is working properly
 def test_register(app):
@@ -133,6 +144,53 @@ def test_spellcheck(app):
     assert b'<div style = "color: black">Misspelled words:</div>' in result.data
     assert b'<div id="misspelled" style = "color: black">dawg, kewl</div>' in result.data
 
+# Check that history is working properly
+def test_history(app):
+    # Check that you can't access page before logging in (should redirect to home page)
+    result = app.get('/history', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    assert b'Home Page' in result.data
+
+    # Register, login, and input test query
+    app.post('/register', data = {'uname':"brian", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    app.post('/login', data = {'uname':"brian", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    app.post('/spell_check', data = {'inputtext':"test quiery"}, follow_redirects=True)
+    app.get('/logout', follow_redirects=True)
+    app.post('/register', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    app.post('/login', data = {'uname':"jonathan", 'pword':"password", '2fa':"6316827788"}, follow_redirects=True)
+    app.post('/spell_check', data = {'inputtext':"my dawg is kewl."}, follow_redirects=True)
+    app.post('/spell_check', data = {'inputtext':"second query"}, follow_redirects=True)
+
+    # Check that you can access page after logging in (normal user)
+    result = app.get('/history', follow_redirects=True)
+    # Check if loaded successfully (only user's query and not others)
+    assert result.status_code == 200
+    assert b'Showing results for: jonathan' in result.data
+    assert b'<div id="numqueries">Total number of queries: 2</div>' in result.data
+    assert b'<a style="color: white" href="history/query1" id="query1">1</a>' not in result.data
+    assert b'<a style="color: white" href="history/query2" id="query2">2</a>' in result.data
+    assert b'<a style="color: white" href="history/query3" id="query3">3</a>' in result.data
+    app.get('/logout', follow_redirects=True)
+
+    # Check that you can access page after logging in (admin)
+    app.post('/login', data = {'uname':"admin", 'pword':"Administrator@1", '2fa':"12345678901"}, follow_redirects=True)
+    result = app.get('/history', follow_redirects=True)
+    # Check if loaded successfully
+    assert result.status_code == 200
+    assert b'<form name="userquery" id="userquery" action="/history" method="POST">' in result.data
+    assert b'Showing results for: admin' in result.data
+    # Check ability to look at other user queries
+    result = app.post('/history', data = {'uname':"brian"}, follow_redirects=True)
+    assert b'Showing results for: brian' in result.data
+    assert b'<div id="numqueries">Total number of queries: 1</div>' in result.data
+    assert b'<a style="color: white" href="history/query1" id="query1">1</a>' in result.data
+    result = app.post('/history', data = {'uname':"jonathan"}, follow_redirects=True)
+    assert b'Showing results for: jonathan' in result.data
+    assert b'<div id="numqueries">Total number of queries: 2</div>' in result.data
+    assert b'<a style="color: white" href="history/query2" id="query2">2</a>' in result.data
+    assert b'<a style="color: white" href="history/query3" id="query3">3</a>' in result.data
+    
 # Check that logout is working properly
 def test_logout(app):
     # Check that you can't access page before logging in (should redirect to home page)
