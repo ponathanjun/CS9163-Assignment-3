@@ -2,10 +2,6 @@
 {% block title %}Login History Page{% endblock %}
 {% block header %}Logs{% endblock %}
 {% block body %}
-{% if status %}
-<div id="status" style = "color: black">{{ status }}</div>
-<br><br>
-{% endif %}
 Enter a username to get their logs!
 <br><br>
 <form name="userid" id="userid" action="/login_history" method="POST">
