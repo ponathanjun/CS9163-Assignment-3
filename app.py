@@ -192,7 +192,7 @@ def create_app():
 
     @app.route("/login_history", methods = ['GET', 'POST'])
     def login_history():
-        if session['username'] == "admin":
+        if 'username' in session and session['username'] == "admin":
             uname = ""
             if request.method == 'POST':
                 uname = bleach.clean(request.form['uname'])
